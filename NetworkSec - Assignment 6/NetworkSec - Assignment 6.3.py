@@ -2,10 +2,11 @@ import hashlib
 import base64
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import hashes
+from cryptography.exceptions import InvalidSignature
 
 
 PI = "Pay 100 DKK to MerchantX"
-OI = "Order #2456: 2 items total 100 DKK"
+OI = "Order #2456: 3 items total 100 DKK"
 
 def digest_message():
     PI_hash = hashlib.sha256(PI.encode()).hexdigest()
@@ -48,8 +49,47 @@ def basic_verification(public_key, signature, combined_hash_bytes):
             algorithm=hashes.SHA256()
         )
         return True
-    except Exception as e:
-        print(f"Verification failed: {e}")
+    except InvalidSignature:
+        print(f"Verification has failed")
+        return False
+    
+    
+def merchant_verification(public_key, signature, PI_hash, OI):
+    OI_hash = hashlib.sha256(OI.encode()).hexdigest()
+    combined_hash = hashlib.sha256((PI_hash + OI_hash).encode()).hexdigest()
+    combined_hash_bytes = bytes.fromhex(combined_hash)
+    try:
+        public_key.verify(
+            signature,
+            combined_hash_bytes,
+            padding=padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH
+            ),
+            algorithm=hashes.SHA256()
+        )
+        return True
+    except InvalidSignature:
+        print(f"Verification has failed")
+        return False
+    
+def payment_verification(public_key, signature, PI, OI_hash):
+    PI_hash = hashlib.sha256(PI.encode()).hexdigest()
+    combined_hash = hashlib.sha256((PI_hash + OI_hash).encode()).hexdigest()
+    combined_hash_bytes = bytes.fromhex(combined_hash)
+    try:
+        public_key.verify(
+            signature,
+            combined_hash_bytes,
+            padding=padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH
+            ),
+            algorithm=hashes.SHA256()
+        )
+        return True
+    except InvalidSignature:
+        print(f"Verification has failed")
         return False
 
 if __name__ == "__main__":
@@ -65,3 +105,7 @@ if __name__ == "__main__":
     print(f"Signature (Base64): {base64.b64encode(signature).decode('utf-8')}")
     is_valid = basic_verification(public_key, signature, combined_hash_bytes)
     print(f"Is the signature valid? {is_valid}")
+    is_valid = merchant_verification(public_key, signature, PI_hash, OI)
+    print(f"Is the merchant's verification successful? {is_valid}")
+    is_valid = payment_verification(public_key, signature, PI, OI_hash)
+    print(f"Is the payment verification successful? {is_valid}")
