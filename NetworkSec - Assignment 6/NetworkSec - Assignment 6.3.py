@@ -36,22 +36,7 @@ def sign_combined_hash(private_key, combined_hash):
     
     return signature, combined_hash_bytes
 
-def basic_verification(public_key, signature, combined_hash_bytes):
-    try:
-        public_key.verify(
-            signature,
-            combined_hash_bytes,
-            padding=padding.PSS(
-                mgf=padding.MGF1(hashes.SHA256()),
-                salt_length=padding.PSS.MAX_LENGTH
-            ),
-            algorithm=hashes.SHA256()
-        )
-        
-        return print(f"is the signature valid? (True/False):", True)
-    except InvalidSignature:
-        
-        return print(f"Verification has failed", False)
+
     
     
 def merchant_verification(public_key, signature, PI_hash, OI):
@@ -143,7 +128,6 @@ if __name__ == "__main__":
     PI_hash, OI_hash, combined_hash = digest_message()
     private_key, public_key = generate_rsa_keypair()
     signature, combined_hash_bytes = sign_combined_hash(private_key, combined_hash)
-    basic_verification(public_key, signature, combined_hash_bytes)
     merchant_verification(public_key, signature, PI_hash, OI)
     payment_verification(public_key, signature, PI, OI_hash)
     merchant_verification_tampered(public_key, signature, PI_hash)
