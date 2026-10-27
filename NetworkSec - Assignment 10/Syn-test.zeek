@@ -9,7 +9,6 @@ export {
 }
 
 global scans: table[addr] of count &default=0;
-global notices: table[addr] of count &default=0;
 
 event connection_state_remove(c: connection)
 {
@@ -18,12 +17,18 @@ event connection_state_remove(c: connection)
         local ip = c$id$orig_h;
 
         scans[ip] += 1;
+    }
+}    
 
+event zeek_done()
+{
+    for (ip in scans)
+    {
         # Only report the IP after 10 suspicious connections
         if (scans[ip] >= 10)
         {
-            local msg = fmt("Possible SYN scan from %s; previous Notices: %d",
-                            ip, notices[ip]);
+            local msg = fmt("Possible SYN scan from %s; total matches: %d",
+                            ip, scans[ip]);
 
             # Write the detection to notice.log
             NOTICE([
@@ -33,9 +38,6 @@ event connection_state_remove(c: connection)
             ]);
 
             print msg;
-
-            notices[ip] += 1;
-            scans[ip] = 0;
         }
     }
 }
