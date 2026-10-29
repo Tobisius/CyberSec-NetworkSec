@@ -3,14 +3,14 @@
 #Define the module name
 module SYNScan;
 
+#Define a notice type for SYN scan detection
 export {
-    #Define a notice type for SYN scan detection
     redef enum Notice::Type += {
         SYN_Scan_Detected
     };
 }
 
-#Keep a count of connections from each IP
+#Initialize a table, to keep track of the flagged ips.
 global scans: table[addr] of count &default=0;
 
 event connection_state_remove(c: connection)
@@ -24,7 +24,6 @@ event connection_state_remove(c: connection)
         scans[ip] += 1;
     }
 }    
-
 
 event zeek_done()
 {

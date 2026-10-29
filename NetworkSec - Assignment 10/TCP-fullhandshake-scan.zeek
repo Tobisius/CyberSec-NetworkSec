@@ -16,7 +16,7 @@ global scans: table[addr] of count &default=0;
 event connection_state_remove(c: connection)
 {
     #Check if the connection matches the condition
-    if (c$history == "ShAR" || c$history == "ShARr"))
+    if (c$history == "ShAR" || c$history == "ShARr")
     {
         #If it matches, log the ip and increment the count.
         local ip = c$id$orig_h;
